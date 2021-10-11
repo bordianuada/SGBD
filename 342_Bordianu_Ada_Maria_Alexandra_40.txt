@@ -1,0 +1,80 @@
+--I
+CREATE OR REPLACE PACKAGE p AS
+TYPE ses_record IS RECORD
+    (sesiune VARCHAR2(35),
+     materie curs.denumire%TYPE,
+     nota note.nota%TYPE);
+TYPE tablou IS TABLE OF ses_record;
+TYPE stud_record IS RECORD
+    (nume_stud student.nume%TYPE,
+    prenume_stud student.prenume%TYPE,
+    nr_matricol_stud student.nr_matricol%TYPE,
+    examen tablou
+    );
+v_student stud_record;
+END p;
+CREATE TABLE detalii (v_student p.stud_record);
+
+DECLARE
+v_matricol student.nr_matricol%TYPE;
+v_info stud_record;
+
+PROCEDURE p1 (v_matricol, v_info) IS
+BEGIN
+IF (v_matricol IS NOT NULL) THEN
+    UPDATE detalii
+    SET examen = v_info
+    WHERE v_matricol = nr_matricol;
+ELSE
+    DBMS_OUTPUT.PUT_LINE('Nu exista studentul cu numarul matricol '|| v_matricol);
+END IF;
+END p1;
+SELECT 
+
+--II
+DECLARE
+v_optiune NUMBER:=Initcap('&p_optiune');
+CURSOR op1() RETURN curs%ROWTYPE IS
+    SELECT *
+    FROM curs;
+CURSOR op2() RETURN note%ROWTYPE IS
+    SELECT *
+    FROM note;
+CURSOR op3() RETURN profesor%ROWTYPE IS
+    SELECT *
+    FROM profesor;
+CURSOR op4() RETURN student%ROWTYPE IS
+    SELECT *
+    FROM student;
+BEGIN
+IF v_optiune = 1 THEN
+for i IN op1() LOOP
+    DBMS_OUTPUT.PUT_LINE(i.cod_curs || i.denumire || i.nr_credite || i.cod_profesor);
+END LOOP;
+ELSIF v_optiune = 2 THEN
+for i IN op2() LOOP
+    DBMS_OUTPUT.PUT_LINE(i.cod_student || i.cod_curs || i.nota || i.data_examinarii);
+END LOOP;
+ELSIF v_optiune = 3 THEN
+for i IN op3() LOOP
+    DBMS_OUTPUT.PUT_LINE(i.cod_profesor || i.nume || i.prenume || i.data_nasterii || i.data_angajarii || i.titlu || i.salariu);
+END LOOP;
+ELSIF v_optiune = 4 THEN
+for i IN op4() LOOP
+    DBMS_OUTPUT.PUT_LINE(i.cod_student || i.nume || i.prenume || i.data_nasterii || i.nr_matricol || i.grupa || i.an || i.cnp || i.sectie);
+END LOOP;
+ELSE DBMS_OUTPUT.PUT_LINE("Nu exista aceasta optiune");
+END IF;
+END;
+/
+
+
+CREATE OR REPLACE TRIGGER trig2
+BEFORE UPDATE OF cnp ON student
+FOR EACH ROW
+BEGIN
+IF (:NEW.cnp <> :OLD.cnp) THEN
+ RAISE_APPLICATION_ERROR(-20002, 'CNP-ul studentului nu se poate schimba');
+END IF;
+END;
+/

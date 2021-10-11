@@ -1,0 +1,84 @@
+/*1"Definiti o functie stocata care primeste ca parametru un numar si returneaza un cursor.
+Definiti un bloc anonim care apeleaza functia definita anterior si  
+afiseaza continutul cursorului returnat (in functie de valoarea cu care se apeleaza functia cursorul trebuie sa contina informatii diferite!)."
+2"Subprogram care primeste ca parametru o lista de prezentari si returneaza 
+lista sortata a acestora in functie de suma sponsorizarilor obtinute."
+"3a) Adaugati o linie, cu informatii relevante (not null), in tabelul info;  
+b) Subprogram care populeaza tabelul info cu informatii 
+(pentru fiecare prezentare se retin codurile vestimentatiilor expuse, precum si denumirea acestora)."
+4"Definiti un tabel in care sa puteti salva modificarile care au loc pe 
+coloanele cod_sp si suma din tabelul sustine. Implementati un trigger care populeaza acest 
+tabel cu informatii detaliate cu privire la modificarile care au loc."
+*/
+
+--1
+CREATE OR REPLACE functie(nr in number)
+RETURN SYS_REFCURSOR IS
+c SYS_REFCURSOR;
+BEGIN
+OPEN c FOR
+SELECT denumire
+FROM vestimentatie
+WHERE nr = cod_vestimentatie
+RETURN c;
+EXCEPTION
+WHEN no_data_found THEN
+dbms_output.put_line('Nu s-a gasit vestimentatia cu codul respectiv');
+WHEN OTHERS THEN
+dbms_output.put_line('A aparut o alta eroare.');
+END;
+/
+SET SERVEROUTPUT ON;
+DECLARE
+c SYS_REFCURSOR;
+nr NUMBER := &numar;
+BEGIN
+cu := functie_stocata(nr);
+FOR i IN cu LOOP
+dbms_output.put_line(i.denumire);
+END LOOP;
+END;
+/
+
+
+--2
+
+CREATE OR REPLACE sortare (v_prezentari l_prezentari) 
+RETURN l_prezentari as
+lista_sortata l_prezentari := l_prezentari();
+v_prezentare prezentare%rowtype;
+BEGIN
+    for i in (select count(cod_prezentare), 
+    
+    RETURN lista_sortata;
+END;
+/
+
+--3
+--a
+INSERT INTO info(cod, fisa)
+VALUES (1, articole(articol(1, 'FISA1'), articol(2, 'FISA2')));
+--b
+DECLARE
+v_info info%ROWTYPE;
+BEGIN
+    SELECT cod_vestimentatie, denumire bulk collect into v_info
+    FROM vestimentatie;
+
+END;
+
+
+--4 
+
+CREATE TABLE tabelnou(
+v_cod_sp sustine.cod_sp%TYPE,
+v_suma sustine.suma%TYPE
+)
+CREATE OR REPLACE TRIGGER t
+AFTER UPDATE ON sustine
+FOR EACH ROW
+BEGIN
+INSERT INTO tabelnou(v_cod_sp,v_suma)
+VALUES(:NEW.cod_sp, :NEW.suma);
+END;
+/

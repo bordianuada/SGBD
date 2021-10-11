@@ -1,0 +1,88 @@
+/*Exercitiul 1*/
+
+CREATE OR REPLACE TYPE vector IS VARRAY(10) OF NUMBER;
+
+CREATE OR REPLACE TYPE matrice IS VARRAY(10) of vector;
+
+CREATE OR REPLACE FUNCTION suma_diagonala (v_matrice IN matrice) RETURN NUMBER
+IS
+suma NUMBER := 0;
+BEGIN
+    FOR i IN 1..v_matrice.COUNT LOOP
+        suma := suma + matrice(i)(i);
+    END LOOP;
+    RETURN suma;
+END suma_diagonala;
+/
+
+
+/*Exercitiul 2*/
+CREATE OR REPLACE TYPE tip IS TABLE OF VARCHAR2(15);
+DECLARE
+    v_listaf tip := tip(EX1,EX2 ); ---lista de firme
+
+ 
+
+    CURSOR c_emp (cp_empnos INTEGER_TT)
+    IS
+        select firma.cod_f,count(lucreaza.id_utilaj) from lucreaza
+        inner join angajat on angajat.cod_ang = lucreaza.cod_angajat
+        inner join firma on angajat.cod_firma = firma.cod_f
+        where firma.cod_f = pfirma
+        group by firma.cod_f
+        order by lucreaza.id_utilaj desc;
+BEGIN
+    FOR r IN c_emp(v_listaf)
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(r.cod_f || ' ' || r.id_utilaj);
+    END LOOP;
+END;
+/
+
+
+/*Exercitiul 3*/
+
+/* cream un trigger care sa verifice daca COD_ANGAJAT + ID_UTILAJ este o cheie primara pe tabela Lucreaza 
+(trebuie sa fie o cheie unica, fara valori nule - NOT NULL exista deja in definitia tabelei)
+verificam si o cheie externa pe COD_ANGAJAT, 
+care va verifica daca codul introdus este deja definit in tabela  ANGAJAT 
+*/
+ 
+
+
+create or replace TRIGGER trigger_pct3
+BEFORE INSERT OR UPDATE ON Lucreaza
+FOR EACH ROW
+DECLARE
+nr_lucreaza integer;
+nr_angajat integer;
+BEGIN
+IF :NEW.cod_angajat is NULL THEN
+    raise_application_error(-20001, 'COD_ANGAJAT nu poate fi null!');
+END IF;
+IF :NEW.id_utilaj is NULL THEN
+    raise_application_error(-20001, 'ID_UTILAJ nu poate fi null!');
+END IF;
+
+ 
+
+SELECT count(cod_angajat||'_'||id_utilaj) INTO nr_lucreaza from Lucreaza WHERE cod_angajat=:NEW.cod_angajat AND id_utilaj = :NEW.id_utilaj;
+IF (nr_lucreaza!=0) THEN
+    raise_application_error(-20002, 'Combinatia angajat / utilaj exista deja in tabela');
+END IF;    
+
+ 
+
+IF :NEW.cod_angajat is NOT NULL THEN
+    BEGIN
+        SELECT count(*) INTO nr_angajat from Angajat WHERE cod_ang=:NEW.cod_angajat;
+        IF (nr_angajat=0) THEN
+            raise_application_error(-20003, 'Codul angajatului nu exista in tabela de angajati! ');          
+        END IF;
+    END;
+END IF;
+
+ 
+
+END;
+/
